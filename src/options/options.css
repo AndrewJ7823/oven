@@ -1,0 +1,17 @@
+:root { color-scheme: light dark; font-family: system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif; }
+body { margin: 0; padding: 24px; max-width: 720px; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+h2 { font-size: 15px; margin: 24px 0 8px; }
+section { border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent); padding-top: 4px; }
+label { display: block; font-size: 13px; margin: 8px 0; }
+label.row { display: flex; align-items: center; gap: 8px; }
+input[type="text"], input[type="password"], textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 6px 8px; font: inherit; }
+.actions { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+button { font: inherit; padding: 6px 14px; }
+button.link { background: none; border: none; color: inherit; text-decoration: underline; cursor: pointer; font-size: 12px; padding: 0; }
+.muted { opacity: 0.7; font-size: 12px; }
+.warn { color: #c47a00; font-size: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
+td.ok { color: #1a7f37; } td.fail { color: #c62828; }
+code { font-size: 12px; }

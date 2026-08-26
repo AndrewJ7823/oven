@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <title>Oven 설정</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Oven — Cookie Replacer</h1>
+      <p class="muted">외부 앱이 전송한 쿠키를 이 프로필에 교체 적용합니다. 익스텐션 ID: <code id="ext-id"></code></p>
+
+      <form id="settings-form">
+        <section>
+          <h2>인증</h2>
+          <label>
+            공유 토큰
+            <input type="password" id="token" autocomplete="off" placeholder="비워두면 인증을 생략합니다 (개발용)" />
+          </label>
+          <p id="token-warning" class="warn" hidden>⚠ 토큰이 비어 있어 누구나 쿠키를 교체할 수 있습니다.</p>
+        </section>
+
+        <section>
+          <h2>허용 도메인</h2>
+          <label>
+            한 줄에 하나씩 (비우면 모든 도메인 허용)
+            <textarea id="allowed-domains" rows="4" placeholder="example.com&#10;internal.corp"></textarea>
+          </label>
+        </section>
+
+        <section>
+          <h2>WebSocket 수신</h2>
+          <label class="row">
+            <input type="checkbox" id="ws-enabled" />
+            외부 앱의 로컬 WebSocket 서버에 접속
+          </label>
+          <label>
+            URL
+            <input type="text" id="ws-url" placeholder="ws://127.0.0.1:8765" />
+          </label>
+          <p class="muted">ws:// 는 127.0.0.1 / localhost / [::1] 만 허용, 그 외 호스트는 wss:// 만 허용됩니다.</p>
+        </section>
+
+        <div class="actions">
+          <button type="submit">저장</button>
+          <span id="status" class="muted"></span>
+        </div>
+      </form>
+
+      <section>
+        <h2>최근 처리 로그 <button type="button" id="refresh-log" class="link">새로고침</button></h2>
+        <table id="log">
+          <thead>
+            <tr><th>시각</th><th>경로</th><th>type</th><th>결과</th><th>상세</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </main>
+    <script type="module" src="./options.ts"></script>
+  </body>
+</html>
