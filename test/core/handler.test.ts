@@ -3,6 +3,7 @@ import { createHandler } from '../../src/core/handler'
 import type { Settings } from '../../src/core/settings'
 import { DEFAULT_SETTINGS } from '../../src/core/settings'
 import { FakeCookies } from '../fakes/cookies'
+import { FakeNavigator } from '../fakes/navigator'
 
 const NOW = 1_700_000_000
 
@@ -10,7 +11,7 @@ function setup(settings: Partial<Settings> = {}) {
   const cookies = new FakeCookies()
   const merged: Settings = { ...DEFAULT_SETTINGS, ...settings }
   const onResult = vi.fn()
-  const handle = createHandler({ cookies, settings: async () => merged, now: () => NOW, version: '0.1.0', onResult })
+  const handle = createHandler({ cookies, navigator: new FakeNavigator(), settings: async () => merged, now: () => NOW, version: '0.1.0', onResult })
   return { cookies, handle, onResult }
 }
 

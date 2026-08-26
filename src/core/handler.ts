@@ -1,6 +1,7 @@
 import type { CookieApi } from './cookie-api'
+import type { NavigatorApi } from './navigator-api'
 import type { Settings } from './settings'
-import type { OutboundResponse } from './protocol'
+import type { OutboundResponse, ReplaceRequest, ReplaceResponse } from './protocol'
 import type { RequestMeta } from './activity-log'
 import { errorResponse, validateInbound } from './protocol'
 import { findDisallowedDomains, tokensMatch } from './auth'
@@ -10,6 +11,7 @@ export type Handler = (raw: unknown, meta: RequestMeta) => Promise<OutboundRespo
 
 export interface HandlerDeps {
   cookies: CookieApi
+  navigator: NavigatorApi
   settings: () => Promise<Settings>
   /** 현재 시각(초) */
   now: () => number
@@ -47,5 +49,41 @@ async function process(raw: unknown, deps: HandlerDeps): Promise<OutboundRespons
     return errorResponse('E_DOMAIN_NOT_ALLOWED', `domains not allowed: ${disallowed.join(', ')}`, ctx)
   }
 
-  return replaceCookies(deps.cookies, req, { now: deps.now })
+  return runReplace(req, deps)
+}
+
+/**
+ * FR-12: open 이 있으면 "창 열기 → 쿠키 주입 → 새로고침" 순서로 처리한다.
+ * 새 창은 아직 이전(또는 없는) 쿠키로 로드되므로, 쿠키 주입 후 그 탭을 새로고침해 반영한다.
+ */
+async function runReplace(req: ReplaceRequest, deps: HandlerDeps): Promise<ReplaceResponse> {
+  const open = req.open
+  const dryRun = req.options.dryRun
+
+  // 1) 창 열기
+  let openedTabId: number | null = null
+  if (open && !dryRun) {
+    try {
+      openedTabId = (await deps.navigator.openWindow(open.url, open.focused)).tabId
+    } catch {
+      openedTabId = null
+    }
+  }
+
+  // 2) 쿠키 주입
+  const result = await replaceCookies(deps.cookies, req, { now: deps.now })
+
+  // 3) 새로고침
+  let reloaded = false
+  if (open && !dryRun && openedTabId !== null) {
+    try {
+      await deps.navigator.reloadTab(openedTabId)
+      reloaded = true
+    } catch {
+      reloaded = false
+    }
+  }
+
+  if (open) result.opened = { url: open.url, tabId: openedTabId, reloaded }
+  return result
 }

@@ -38,6 +38,11 @@ export interface PingRequest {
   token?: string
 }
 
+export interface OpenTarget {
+  url: string
+  focused: boolean
+}
+
 export interface ReplaceRequest {
   type: 'cookies.replace'
   requestId: string | null
@@ -45,6 +50,7 @@ export interface ReplaceRequest {
   mode: ReplaceMode
   options: { dryRun: boolean }
   cookies: NormalizedCookie[]
+  open?: OpenTarget
 }
 
 export type InboundRequest = PingRequest | ReplaceRequest
@@ -58,6 +64,12 @@ export interface CookieFailure {
   message: string
 }
 
+export interface OpenResult {
+  url: string
+  tabId: number | null
+  reloaded: boolean
+}
+
 export interface ReplaceResponse {
   requestId: string | null
   type: 'cookies.replace'
@@ -66,6 +78,7 @@ export interface ReplaceResponse {
   removed: number
   failed: CookieFailure[]
   dryRun: boolean
+  opened?: OpenResult
 }
 
 export interface PongResponse {
@@ -184,6 +197,24 @@ function normalizeCookie(raw: unknown, path: string): NormalizedCookie {
   }
 }
 
+const OPEN_SCHEMES = new Set(['http:', 'https:'])
+
+function normalizeOpen(raw: unknown): OpenTarget | undefined {
+  if (raw === undefined || raw === null) return undefined
+  if (!isRecord(raw)) return fail('open must be an object')
+  const url = raw['url']
+  if (typeof url !== 'string') fail('open.url must be a string')
+  let parsed: URL
+  try {
+    parsed = new URL(url as string)
+  } catch {
+    return fail('open.url is not a valid URL')
+  }
+  if (!OPEN_SCHEMES.has(parsed.protocol)) fail('open.url must be an http(s) URL')
+  const focused = readBoolean(raw, 'focused', 'open', true)
+  return { url: url as string, focused }
+}
+
 export function validateInbound(raw: unknown): ValidationResult {
   if (!isRecord(raw)) {
     return { ok: false, code: 'E_INVALID_MESSAGE', message: 'message must be a JSON object', requestId: null, type: null }
@@ -217,10 +248,11 @@ export function validateInbound(raw: unknown): ValidationResult {
     const dryRun = readBoolean(optionsRaw, 'dryRun', 'options', false)
 
     const cookies = cookiesArr.map((c, i) => normalizeCookie(c, `cookies[${i}]`))
+    const open = normalizeOpen(raw['open'])
 
     return {
       ok: true,
-      request: { type: 'cookies.replace', requestId, token, mode: modeRaw as ReplaceMode, options: { dryRun }, cookies },
+      request: { type: 'cookies.replace', requestId, token, mode: modeRaw as ReplaceMode, options: { dryRun }, cookies, ...(open ? { open } : {}) },
     }
   } catch (e) {
     if (e instanceof Invalid) return { ok: false, code: 'E_INVALID_MESSAGE', message: e.message, requestId, type }

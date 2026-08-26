@@ -123,6 +123,18 @@
 - 최근 처리 결과 50건(시각, 트랜스포트, type, ok, applied/removed/failed 수, 오류 코드)을 `chrome.storage.session` 에 보관하고 옵션 페이지에서 표시한다.
 - 쿠키 **값**은 로그에 기록하지 않는다.
 
+### FR-12 창 열기 → 쿠키 주입 → 새로고침
+
+- 요청에 이동할 주소 `open.url` 이 포함되면 다음 순서로 처리한다.
+  1. `open.url` 로 **새 창을 연다** (`chrome.windows.create`). `open.focused`(기본 `true`)로 포커스 여부를 지정한다.
+  2. FR-06/07 절차로 **쿠키를 주입**한다.
+  3. 1에서 열린 탭을 **새로고침**한다(`chrome.tabs.reload`, 캐시 무시). 새 창은 주입 이전 쿠키로 로드되므로 반드시 새로고침해 반영한다.
+- `open.url` 은 `http://` 또는 `https://` 만 허용한다. 그 외 스킴/형식 오류는 `E_INVALID_MESSAGE`.
+- `dryRun` 이면 실제로 창을 열거나 새로고침하지 않고 `opened.tabId: null, reloaded: false` 로 계획만 보고한다.
+- 창 열기 실패 시 쿠키 주입은 계속 진행하되 새로고침은 건너뛰고 `tabId: null` 로 보고한다.
+- 인증/도메인 허용 검사에 실패하면 창을 열지 않는다.
+- 응답에 `opened: { url, tabId, reloaded }` 를 포함한다.
+
 ---
 
 ## 4. 메시지 프로토콜
@@ -136,6 +148,7 @@
   "token": "shared-secret",
   "mode": "merge",
   "options": { "dryRun": false },
+  "open": { "url": "https://example.com/dashboard", "focused": true },
   "cookies": [
     {
       "name": "session_id",
@@ -161,9 +174,12 @@
   "applied": 1,
   "removed": 0,
   "failed": [],
-  "dryRun": false
+  "dryRun": false,
+  "opened": { "url": "https://example.com/dashboard", "tabId": 42, "reloaded": true }
 }
 ```
+
+`open` 을 생략하면 응답에 `opened` 필드가 없다.
 
 실패 예:
 
@@ -202,7 +218,7 @@
 | NFR-02 | 코어 로직은 `chrome.*` 전역에 직접 의존하지 않고 주입된 인터페이스(`CookieApi`, `SettingsStore`)만 사용 → 단위 테스트 가능 |
 | NFR-03 | 요청 500개 처리 시 1초 이내 (로컬 기준) |
 | NFR-04 | 쿠키 값은 콘솔/로그/스토리지에 기록하지 않음 |
-| NFR-05 | 권한 최소화: `cookies`, `storage`, `alarms` + `host_permissions: <all_urls>` (쿠키 설정 대상 도메인 제한 불가로 불가피, 옵션의 허용 목록으로 보완) |
+| NFR-05 | 권한 최소화: `cookies`, `storage`, `alarms` + `host_permissions: <all_urls>` (쿠키 설정 대상 도메인 제한 불가로 불가피, 옵션의 허용 목록으로 보완). 창 열기/새로고침(`chrome.windows`, `chrome.tabs.reload`)은 별도 권한이 필요 없다 |
 | NFR-06 | 단위 테스트 커버리지 코어 90% 이상 |
 
 ---
@@ -258,3 +274,4 @@ test/
 | AC-08 | `__Host-` 접두어에 domain 쿠키 | `E_INVALID_MESSAGE` |
 | AC-09 | ping | `pong` + version |
 | AC-10 | WebSocket 끊김 | 백오프 후 재연결, 하트비트 전송 |
+| AC-11 | `open.url` 포함 요청 | 창 열기 → 쿠키 주입 → 새로고침 순서로 처리, `opened.reloaded: true` |

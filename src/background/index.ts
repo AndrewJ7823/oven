@@ -2,6 +2,7 @@
  * 서비스 워커 엔트리. 유일하게 실제 chrome.* 를 만지는 곳 — 어댑터로 감싸 코어에 주입한다. (NFR-02)
  */
 import type { CookieApi } from '../core/cookie-api'
+import type { NavigatorApi } from '../core/navigator-api'
 import type { StorageAreaLike } from '../core/storage-api'
 import { createHandler } from '../core/handler'
 import { createSettingsStore } from '../core/settings'
@@ -16,6 +17,17 @@ const cookieApi: CookieApi = {
   remove: (details) => chrome.cookies.remove(details),
 }
 
+// chrome.windows/tabs → NavigatorApi. 창을 열고, 지정 탭을 캐시 무시하고 새로고침한다. (FR-12)
+const navigatorApi: NavigatorApi = {
+  async openWindow(url, focused) {
+    const win = await chrome.windows.create({ url, focused })
+    return { tabId: win?.tabs?.[0]?.id ?? null }
+  },
+  async reloadTab(tabId) {
+    await chrome.tabs.reload(tabId, { bypassCache: true })
+  },
+}
+
 const storageArea = (area: chrome.storage.StorageArea): StorageAreaLike => ({
   get: (key) => area.get(key),
   set: (items) => area.set(items),
@@ -27,6 +39,7 @@ const activityLog = createActivityLog(storageArea(chrome.storage.session))
 // ── 핸들러 ────────────────────────────────────────────────────────────
 const handle = createHandler({
   cookies: cookieApi,
+  navigator: navigatorApi,
   settings: () => settingsStore.load(),
   now: () => Math.floor(Date.now() / 1000),
   version: chrome.runtime.getManifest().version,

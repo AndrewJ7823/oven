@@ -23,6 +23,7 @@
 | 인증 · 허용 목록 | 공유 토큰(상수 시간 비교), 도메인 허용 목록으로 교체 대상 제한 |
 | 부분 실패 보고 | 쿠키 단위로 `E_EXPIRED` / `E_SET_FAILED` 수집, 나머지는 계속 처리 |
 | dryRun | 실제 저장 없이 검증 결과와 예정 작업 수만 반환 |
+| 창 열기 → 주입 → 새로고침 | `open.url` 을 함께 보내면 그 주소로 새 창을 연 뒤 쿠키를 주입하고 해당 탭을 새로고침해 즉시 반영 |
 | 옵션 페이지 | 토큰·허용 도메인·WebSocket 설정, 최근 처리 로그 50건(쿠키 값은 기록하지 않음) |
 
 ## 설치
@@ -47,6 +48,7 @@ pnpm build          # → dist/
   "token": "shared-secret",
   "mode": "merge",
   "options": { "dryRun": false },
+  "open": { "url": "https://example.com/dashboard", "focused": true },
   "cookies": [
     {
       "name": "session_id",
@@ -65,11 +67,30 @@ pnpm build          # → dist/
 응답:
 
 ```json
-{ "requestId": "3f1c…", "type": "cookies.replace", "ok": true, "applied": 1, "removed": 0, "failed": [], "dryRun": false }
+{ "requestId": "3f1c…", "type": "cookies.replace", "ok": true, "applied": 1, "removed": 0, "failed": [], "dryRun": false,
+  "opened": { "url": "https://example.com/dashboard", "tabId": 42, "reloaded": true } }
 ```
 
 `{"type":"ping"}` 은 인증 없이 `{"type":"pong","ok":true,"version":"0.1.0"}` 을 반환한다.
 오류 코드 전체 목록은 [`docs/SPEC.md` 4.3](docs/SPEC.md#43-오류-코드) 참조.
+
+### 창 열기 → 주입 → 새로고침 (`open`)
+
+요청에 `open.url`(http/https)을 넣으면 익스텐션이 **① 그 주소로 새 창을 열고 → ② 쿠키를 주입한 뒤 → ③ 해당 탭을 새로고침**한다.
+새 창은 주입 이전 쿠키로 로드되므로, 새로고침으로 새 세션이 즉시 반영된다.
+
+```js
+await chrome.runtime.sendMessage(EXTENSION_ID, {
+  type: 'cookies.replace',
+  token: 'shared-secret',
+  open: { url: 'https://example.com/dashboard' }, // focused 기본 true
+  cookies: [{ name: 'sid', value: 'abc', domain: '.example.com', secure: true, sameSite: 'lax' }],
+})
+// → opened: { url, tabId, reloaded: true }
+```
+
+`dryRun` 이면 창을 열지 않고 계획만 보고하며, 인증/도메인 검사에 실패하면 창을 열지 않는다.
+창 열기·새로고침(`chrome.windows`, `chrome.tabs.reload`)에는 별도 권한이 필요 없다.
 
 ### A. 웹 페이지에서 보내기 (externally_connectable)
 

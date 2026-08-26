@@ -30,6 +30,7 @@ wss.on('connection', (ws) => {
     requestId: crypto.randomUUID(),
     token,
     mode: 'merge',
+    open: { url: 'http://localhost:3000/' }, // 이동할 주소 (창 열기 → 주입 → 새로고침)
     cookies: [
       {
         name: 'oven_demo',
