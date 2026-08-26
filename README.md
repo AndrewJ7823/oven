@@ -3,7 +3,7 @@
 외부 애플리케이션(데스크톱 프로그램, 로컬 서버, 웹 앱)이 전송한 쿠키를 받아
 현재 Chrome 프로필의 쿠키 저장소에 **교체 적용**하는 Manifest V3 크롬 익스텐션.
 
-[![tests](https://img.shields.io/badge/tests-106%20passed-brightgreen)](#개발)
+[![tests](https://img.shields.io/badge/tests-126%20passed-brightgreen)](#개발)
 [![coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](#개발)
 ![chrome](https://img.shields.io/badge/Chrome-116%2B-blue)
 ![mv3](https://img.shields.io/badge/Manifest-V3-blue)
@@ -143,7 +143,8 @@ src/
     protocol.ts      요청 스키마 검증 · 정규화 · 응답 타입
     auth.ts          토큰 비교 · 도메인 허용 판정
     replacer.ts      merge / replace 실행
-    handler.ts       검증 → 인증 → 허용 목록 → 실행 진입점
+    handler.ts       검증 → 인증 → 허용 목록 → (창 열기 →) 실행 진입점
+    navigator-api.ts 창 열기 · 탭 새로고침 주입 인터페이스
     settings.ts      설정 스키마 · 저장소
     activity-log.ts  처리 로그(값 미포함)
   transports/
@@ -152,7 +153,7 @@ src/
   background/index.ts     서비스 워커 — 유일하게 실제 chrome.* 를 주입
   options/                설정 · 로그 UI
 test/
-  fakes/           FakeCookies · FakeStorageArea · FakeExternalMessageEvent · FakeWebSocket
+  fakes/           FakeCookies · FakeStorageArea · FakeExternalMessageEvent · FakeWebSocket · FakeNavigator
   core/, transports/
 scripts/
   ws-server-example.mjs   외부 앱 역할 예제 서버
@@ -167,7 +168,11 @@ scripts/
                                             ▼
                                handler: validate → auth → allowlist
                                             ▼
-                               replacer: (replace 모드면 삭제) → chrome.cookies.set
+                     (open.url 있으면) chrome.windows.create  ← ① 창 열기
+                                            ▼
+                     replacer: (replace 모드면 삭제) → chrome.cookies.set  ← ② 쿠키 주입
+                                            ▼
+                     (open.url 있으면) chrome.tabs.reload  ← ③ 새로고침
 ```
 
 ## 보안 메모
