@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <title>Oven</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <header>
+      <strong>Oven</strong>
+      <span id="status" class="status"><span class="dot" data-dot="grey"></span><span id="status-label">…</span></span>
+    </header>
+
+    <div class="row toggle">
+      <label class="switch">
+        <input type="checkbox" id="ws-enabled" />
+        <span>WebSocket 수신</span>
+      </label>
+    </div>
+    <div class="row url"><code id="ws-url">ws://127.0.0.1:8765</code></div>
+
+    <div class="row last">
+      <span class="muted">최근</span>
+      <span id="last">처리 기록 없음</span>
+    </div>
+
+    <footer>
+      <button type="button" id="reconnect">재연결</button>
+      <button type="button" id="open-options">설정…</button>
+    </footer>
+
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>

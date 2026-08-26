@@ -9,6 +9,8 @@ import { createSettingsStore } from '../core/settings'
 import { createActivityLog, summarize } from '../core/activity-log'
 import { attachExternalMessageTransport } from '../transports/external-message'
 import { WebSocketTransport } from '../transports/websocket'
+import type { ConnectionStatus } from '../core/status'
+import { toConnectionStatus, describeBadge } from '../core/status'
 
 // ── 어댑터 ────────────────────────────────────────────────────────────
 const cookieApi: CookieApi = {
@@ -48,6 +50,16 @@ const handle = createHandler({
   },
 })
 
+// ── 연결 상태(팝업/뱃지) ──────────────────────────────────────────────
+const STATUS_KEY = 'connectionStatus'
+
+async function publishStatus(status: ConnectionStatus): Promise<void> {
+  await chrome.storage.session.set({ [STATUS_KEY]: status })
+  const badge = describeBadge(status)
+  await chrome.action.setBadgeText({ text: badge.text })
+  if (badge.text) await chrome.action.setBadgeBackgroundColor({ color: badge.color })
+}
+
 // ── 트랜스포트 1: externally_connectable ──────────────────────────────
 attachExternalMessageTransport(chrome.runtime.onMessageExternal, handle)
 
@@ -64,16 +76,42 @@ async function syncWebSocket(): Promise<void> {
   wsTransport?.stop()
   wsTransport = null
   wsUrl = wantUrl
-  if (!wantUrl) return
+  if (!wantUrl) {
+    void publishStatus('disabled')
+    return
+  }
 
   try {
-    wsTransport = new WebSocketTransport({ url: wantUrl, handle, factory: (u) => new WebSocket(u) })
+    wsTransport = new WebSocketTransport({
+      url: wantUrl,
+      handle,
+      factory: (u) => new WebSocket(u),
+      onStateChange: (state) => void publishStatus(toConnectionStatus(true, state)),
+    })
     wsTransport.start()
   } catch (e) {
     console.warn('[oven] websocket transport disabled:', e instanceof Error ? e.message : e)
     wsUrl = null
+    void publishStatus('error')
   }
 }
+
+/** 팝업의 "재연결" 버튼이 강제 재접속을 요청한다. */
+async function reconnect(): Promise<void> {
+  wsTransport?.stop()
+  wsTransport = null
+  wsUrl = null
+  await syncWebSocket()
+}
+
+// 팝업 ↔ 서비스 워커 내부 메시지 (외부 메시지와 별개 채널)
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg?.cmd === 'reconnect') {
+    reconnect().then(() => sendResponse({ ok: true }))
+    return true
+  }
+  return false
+})
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && 'settings' in changes) void syncWebSocket()

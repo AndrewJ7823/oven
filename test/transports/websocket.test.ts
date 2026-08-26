@@ -164,3 +164,28 @@ describe('FR-02 WebSocket 트랜스포트', () => {
     expect(FakeWebSocket.instances[0]!.sent).toHaveLength(0)
   })
 })
+
+describe('FR-13 상태 변경 콜백', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] })
+    FakeWebSocket.reset()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('연결/해제 시 onStateChange 로 상태를 통지한다', () => {
+    const states: string[] = []
+    const t = new WebSocketTransport({
+      url: 'ws://127.0.0.1:8765',
+      handle: vi.fn(async () => pong),
+      factory: (u) => new FakeWebSocket(u),
+      onStateChange: (s) => states.push(s),
+    })
+    t.start()
+    FakeWebSocket.last.open()
+    FakeWebSocket.last.closeFromServer()
+    t.stop()
+    expect(states).toEqual(['connecting', 'open', 'closed', 'idle'])
+  })
+})

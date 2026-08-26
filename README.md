@@ -3,7 +3,7 @@
 외부 애플리케이션(데스크톱 프로그램, 로컬 서버, 웹 앱)이 전송한 쿠키를 받아
 현재 Chrome 프로필의 쿠키 저장소에 **교체 적용**하는 Manifest V3 크롬 익스텐션.
 
-[![tests](https://img.shields.io/badge/tests-126%20passed-brightgreen)](#개발)
+[![tests](https://img.shields.io/badge/tests-136%20passed-brightgreen)](#개발)
 [![coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)](#개발)
 ![chrome](https://img.shields.io/badge/Chrome-116%2B-blue)
 ![mv3](https://img.shields.io/badge/Manifest-V3-blue)
@@ -24,6 +24,7 @@
 | 부분 실패 보고 | 쿠키 단위로 `E_EXPIRED` / `E_SET_FAILED` 수집, 나머지는 계속 처리 |
 | dryRun | 실제 저장 없이 검증 결과와 예정 작업 수만 반환 |
 | 창 열기 → 주입 → 새로고침 | `open.url` 을 함께 보내면 그 주소로 새 창을 연 뒤 쿠키를 주입하고 해당 탭을 새로고침해 즉시 반영 |
+| 툴바 팝업(빠른 제어판) | 아이콘 클릭 시 연결 상태·WebSocket on/off·최근 처리·재연결, 아이콘 뱃지로 상태 표시 |
 | 옵션 페이지 | 토큰·허용 도메인·WebSocket 설정, 최근 처리 로그 50건(쿠키 값은 기록하지 않음) |
 
 ## 설치
@@ -36,6 +37,8 @@ pnpm build          # → dist/
 1. `chrome://extensions` → **개발자 모드** ON
 2. **압축해제된 확장 프로그램을 로드** → `dist/` 선택
 3. 확장 프로그램 **옵션**에서 토큰 / 허용 도메인 / WebSocket 설정 (상단에 익스텐션 ID 표시)
+
+툴바의 **Oven 아이콘**을 클릭하면 빠른 제어판 팝업이 열린다 — 연결 상태 확인, WebSocket 수신 on/off, 재연결, 설정 페이지 이동. 아이콘 뱃지로 상태(연결 중 `…`, 끊김 `!`)가 표시된다.
 
 ## 사용법
 
@@ -147,11 +150,13 @@ src/
     navigator-api.ts 창 열기 · 탭 새로고침 주입 인터페이스
     settings.ts      설정 스키마 · 저장소
     activity-log.ts  처리 로그(값 미포함)
+    status.ts        연결 상태·뱃지·요약 매핑(팝업용)
   transports/
     external-message.ts   chrome.runtime.onMessageExternal 어댑터
     websocket.ts          WebSocket 클라이언트(재연결 · 하트비트)
   background/index.ts     서비스 워커 — 유일하게 실제 chrome.* 를 주입
   options/                설정 · 로그 UI
+  popup/                  툴바 아이콘 팝업(빠른 제어판)
 test/
   fakes/           FakeCookies · FakeStorageArea · FakeExternalMessageEvent · FakeWebSocket · FakeNavigator
   core/, transports/

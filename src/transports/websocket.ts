@@ -16,6 +16,7 @@ export interface WebSocketTransportOptions {
   heartbeatMs?: number
   minBackoffMs?: number
   maxBackoffMs?: number
+  onStateChange?: (state: TransportState) => void
 }
 
 export type TransportState = 'idle' | 'connecting' | 'open' | 'closed'
@@ -60,6 +61,7 @@ export class WebSocketTransport {
   private readonly heartbeatMs: number
   private readonly minBackoffMs: number
   private readonly maxBackoffMs: number
+  private readonly onStateChange?: (state: TransportState) => void
 
   constructor(opts: WebSocketTransportOptions) {
     if (!isAllowedWebSocketUrl(opts.url)) {
@@ -71,11 +73,18 @@ export class WebSocketTransport {
     this.heartbeatMs = opts.heartbeatMs ?? 20_000
     this.minBackoffMs = opts.minBackoffMs ?? 1_000
     this.maxBackoffMs = opts.maxBackoffMs ?? 30_000
+    this.onStateChange = opts.onStateChange
     this.backoffMs = this.minBackoffMs
   }
 
   get state(): TransportState {
     return this._state
+  }
+
+  private setState(next: TransportState): void {
+    if (this._state === next) return
+    this._state = next
+    this.onStateChange?.(next)
   }
 
   start(): void {
@@ -89,18 +98,18 @@ export class WebSocketTransport {
     this.clearTimers()
     const ws = this.ws
     this.ws = null
-    this._state = 'idle'
+    this.setState('idle')
     ws?.close()
   }
 
   private connect(): void {
-    this._state = 'connecting'
+    this.setState('connecting')
     const ws = this.factory(this.url)
     this.ws = ws
 
     ws.addEventListener('open', () => {
       if (this.ws !== ws) return
-      this._state = 'open'
+      this.setState('open')
       this.backoffMs = this.minBackoffMs
       this.startHeartbeat()
     })
@@ -115,7 +124,7 @@ export class WebSocketTransport {
       this.ws = null
       this.stopHeartbeat()
       if (this.stopped) return
-      this._state = 'closed'
+      this.setState('closed')
       this.scheduleReconnect()
     })
   }

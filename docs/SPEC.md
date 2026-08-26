@@ -135,6 +135,17 @@
 - 인증/도메인 허용 검사에 실패하면 창을 열지 않는다.
 - 응답에 `opened: { url, tabId, reloaded }` 를 포함한다.
 
+### FR-13 툴바 아이콘 팝업(빠른 제어판)
+
+- 툴바 아이콘 클릭 시 팝업(`action.default_popup`)을 연다. 팝업은 **빠른 제어판** 역할이며 상세 편집은 옵션 페이지에서 한다.
+- 표시/조작 항목
+  - **연결 상태**: `connected`(연결됨/초록) · `connecting`(연결 중/노랑) · `error`(연결 끊김/빨강) · `disabled`(비활성/회색)
+  - **WebSocket 수신 토글**: 변경 시 즉시 설정을 저장하고, 서비스 워커가 재접속/해제한다.
+  - **최근 처리 1건 요약**(쿠키 값 미포함), **재연결** 버튼, **설정…**(옵션 페이지 열기) 버튼
+- 서비스 워커는 트랜스포트 상태 변화를 `chrome.storage.session` 에 반영하고, 툴바 아이콘 **뱃지**를 갱신한다:
+  연결됨/비활성은 뱃지 없음, 연결 중 `…`(노랑), 끊김 `!`(빨강).
+- 팝업은 `chrome.storage.onChanged` 를 구독해 상태/로그 변화를 실시간 반영한다.
+
 ---
 
 ## 4. 메시지 프로토콜
@@ -218,7 +229,7 @@
 | NFR-02 | 코어 로직은 `chrome.*` 전역에 직접 의존하지 않고 주입된 인터페이스(`CookieApi`, `SettingsStore`)만 사용 → 단위 테스트 가능 |
 | NFR-03 | 요청 500개 처리 시 1초 이내 (로컬 기준) |
 | NFR-04 | 쿠키 값은 콘솔/로그/스토리지에 기록하지 않음 |
-| NFR-05 | 권한 최소화: `cookies`, `storage`, `alarms` + `host_permissions: <all_urls>` (쿠키 설정 대상 도메인 제한 불가로 불가피, 옵션의 허용 목록으로 보완). 창 열기/새로고침(`chrome.windows`, `chrome.tabs.reload`)은 별도 권한이 필요 없다 |
+| NFR-05 | 권한 최소화: `cookies`, `storage`, `alarms` + `host_permissions: <all_urls>` (쿠키 설정 대상 도메인 제한 불가로 불가피, 옵션의 허용 목록으로 보완). 창 열기/새로고침(`chrome.windows`, `chrome.tabs.reload`)과 툴바 팝업(`action`)은 별도 권한이 필요 없다 |
 | NFR-06 | 단위 테스트 커버리지 코어 90% 이상 |
 
 ---
@@ -275,3 +286,4 @@ test/
 | AC-09 | ping | `pong` + version |
 | AC-10 | WebSocket 끊김 | 백오프 후 재연결, 하트비트 전송 |
 | AC-11 | `open.url` 포함 요청 | 창 열기 → 쿠키 주입 → 새로고침 순서로 처리, `opened.reloaded: true` |
+| AC-12 | 팝업에서 WebSocket 토글 ON | 설정 저장 → 접속 → 팝업 상태 '연결됨', 아이콘 뱃지 정리 |
