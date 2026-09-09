@@ -45,11 +45,17 @@ jobs:
       - name: 릴리스 노트 추출 (CHANGELOG.md → release/NOTES.md)
         run: node scripts/release-notes.mjs "$RELEASE_TAG" && cat release/NOTES.md
 
-      - name: GitHub Release 생성
+      - name: GitHub Release 생성 (이미 있으면 자산·노트 갱신)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$RELEASE_TAG" release/oven-*.zip \
-            --title "Oven $RELEASE_TAG" \
-            --notes-file release/NOTES.md \
-            --verify-tag
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "release $RELEASE_TAG exists → updating assets and notes"
+            gh release upload "$RELEASE_TAG" release/oven-*.zip --clobber
+            gh release edit "$RELEASE_TAG" --title "Oven $RELEASE_TAG" --notes-file release/NOTES.md
+          else
+            gh release create "$RELEASE_TAG" release/oven-*.zip \
+              --title "Oven $RELEASE_TAG" \
+              --notes-file release/NOTES.md \
+              --verify-tag
+          fi
