@@ -1,10 +1,21 @@
 name: Release
 
-# 배포 절차: 로컬에서 `pnpm release <patch|minor|major>` → `git push origin main --follow-tags`
+# 배포 절차: 로컬에서 `pnpm release <patch|minor|major>` → `git push origin main` → `git push origin vX.Y.Z`
+# (커밋과 태그를 한 번에 푸시하면 태그 이벤트가 워크플로를 깨우지 못할 수 있어 태그는 따로 푸시한다.)
 # vX.Y.Z 태그가 push 되면 빌드 → zip → GitHub Release 생성(CHANGELOG 의 해당 섹션이 릴리스 노트).
+# 트리거가 누락됐을 때는 Actions 탭 → Release → Run workflow 에서 태그 이름을 넣어 수동 실행한다.
 on:
   push:
     tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '릴리스할 태그 (예: v1.0.0). 이미 push 되어 있어야 한다.'
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 permissions:
   contents: write
@@ -14,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -22,7 +35,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: 태그와 package.json / manifest 버전 일치 확인
-        run: pnpm version:check "$GITHUB_REF_NAME"
+        run: pnpm version:check "$RELEASE_TAG"
 
       - run: pnpm typecheck
       - run: pnpm test
@@ -30,13 +43,13 @@ jobs:
       - run: pnpm package
 
       - name: 릴리스 노트 추출 (CHANGELOG.md → release/NOTES.md)
-        run: node scripts/release-notes.mjs "$GITHUB_REF_NAME" && cat release/NOTES.md
+        run: node scripts/release-notes.mjs "$RELEASE_TAG" && cat release/NOTES.md
 
       - name: GitHub Release 생성
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" release/oven-*.zip \
-            --title "Oven $GITHUB_REF_NAME" \
+          gh release create "$RELEASE_TAG" release/oven-*.zip \
+            --title "Oven $RELEASE_TAG" \
             --notes-file release/NOTES.md \
             --verify-tag

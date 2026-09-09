@@ -345,9 +345,13 @@ pnpm send ─(WebSocket)─▶ websocket ────────┤
 # 0. 작업 중 변경 사항을 CHANGELOG.md 의 "## [Unreleased]" 아래에 적어 둔다
 # 1. 버전 올리기 → CHANGELOG 갱신 → 검사(typecheck·test) → 커밋 → 태그
 pnpm release patch          # 또는 minor · major · 1.2.3   (--dry-run 으로 미리보기, --no-verify 로 검사 생략)
-# 2. push → Release 워크플로 실행
-git push origin main --follow-tags
+# 2. 커밋을 먼저, 태그를 따로 push → 태그 push 가 Release 워크플로를 실행한다
+git push origin main
+git push origin v1.0.1
 ```
+
+> 커밋과 태그를 `--follow-tags` 로 한 번에 푸시하면 태그 이벤트가 워크플로를 깨우지 못하는 경우가 있다.
+> 그럴 때는 Actions 탭 → **Release** → **Run workflow** 에 태그 이름(`v1.0.1`)을 넣어 수동 실행하면 같은 절차가 돈다.
 
 `v1.0.1` 태그가 올라가면 [Release 워크플로](.github/workflows/release.yml)가
 

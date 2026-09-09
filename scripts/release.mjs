@@ -2,8 +2,9 @@
 /**
  * 릴리스 준비: 버전 올리기 → CHANGELOG 갱신 → 검사 → 커밋 → 태그.
  *   pnpm release <patch|minor|major|X.Y.Z> [--no-verify] [--dry-run]
- * 태그를 push 하면 GitHub Actions(release.yml)가 빌드·zip·Release 생성을 맡는다:
- *   git push origin main --follow-tags
+ * 태그를 push 하면 GitHub Actions(release.yml)가 빌드·zip·Release 생성을 맡는다.
+ * 커밋과 태그를 한 번에 푸시하면 태그 이벤트가 누락될 수 있어 두 번에 나눠 푸시한다:
+ *   git push origin main && git push origin vX.Y.Z
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
@@ -64,6 +65,7 @@ run(`git commit -m "chore: release v${next}"`)
 run(`git tag -a v${next} -m "v${next}"`)
 
 console.log(`
-✓ v${next} 커밋·태그 완료. 배포하려면:
-    git push origin main --follow-tags
-  → GitHub Actions 가 빌드 후 Release 에 oven-v${next}.zip 을 올립니다.`)
+✓ v${next} 커밋·태그 완료. 배포하려면 (태그는 따로 푸시):
+    git push origin main && git push origin v${next}
+  → GitHub Actions 가 빌드 후 Release 에 oven-v${next}.zip 을 올립니다.
+  트리거가 누락되면 Actions → Release → Run workflow 에 v${next} 를 입력해 수동 실행합니다.`)

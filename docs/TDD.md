@@ -27,7 +27,7 @@ pnpm test:watch    # 파일 변경 시 재실행 (TDD 루프)
 pnpm test:coverage # 커버리지 (코어 90% 목표)
 pnpm typecheck
 pnpm build         # dist/ 생성 → chrome://extensions 에서 로드
-pnpm release patch # 버전 올리기 → CHANGELOG → 커밋 → 태그 (push 하면 GitHub Release 생성)
+pnpm release patch # 버전 올리기 → CHANGELOG → 커밋 → 태그 (main 푸시 후 태그를 따로 푸시하면 GitHub Release 생성)
 ```
 
 ## 테스트 ↔ 요구사항 매핑 규칙
