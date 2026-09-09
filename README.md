@@ -16,10 +16,6 @@
 - 🧪 TDD 가이드: [`docs/TDD.md`](docs/TDD.md)
 - 📝 변경 이력: [`CHANGELOG.md`](CHANGELOG.md)
 
-<p align="center">
-  <img src="docs/screenshots/send-cli.png" alt="pnpm send 로 쿠키를 보내는 터미널 출력" width="640" />
-</p>
-
 ---
 
 ## 주요 기능
