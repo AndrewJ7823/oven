@@ -16,6 +16,10 @@
 - 🧪 TDD 가이드: [`docs/TDD.md`](docs/TDD.md)
 - 📝 변경 이력: [`CHANGELOG.md`](CHANGELOG.md)
 
+<p align="center">
+  <img src="docs/screenshots/send-cli.png" alt="pnpm send 로 쿠키를 보내는 터미널 출력" width="640" />
+</p>
+
 ---
 
 ## 주요 기능
@@ -58,6 +62,8 @@
 툴바의 **Oven 아이콘**을 클릭해 팝업을 열고 **WebSocket 수신** 토글을 ON 으로 바꾼다.
 상태가 *연결 중…* (뱃지 `…`) 으로 바뀌면 준비 완료다. 아직 보내는 쪽이 없으니 연결 중 상태가 정상이다.
 
+<img src="docs/screenshots/popup.png" alt="Oven 팝업 — 연결 상태, WebSocket 수신 토글, 최근 처리, 재연결·설정 버튼" width="340" />
+
 > 처음에는 토큰을 비워 둔다(인증 생략). 잘 되는 것을 확인한 뒤 [옵션 페이지](#옵션-페이지)에서 토큰을 설정한다.
 
 **3. 쿠키를 보낸다**
@@ -75,7 +81,9 @@ pnpm send --domain localhost demo=hello --open http://localhost:3000/
 ```
 
 새 창이 `http://localhost:3000/` 으로 열리고 새로고침되며, 개발자도구 → Application → Cookies 에 `demo=hello` 가 보인다.
-팝업의 **최근 처리**에도 한 줄이 남는다.
+팝업의 **최근 처리**에도 한 줄이 남는다. 성공(`✓`)과 실패(`✗`) 출력은 아래처럼 구분된다.
+
+<img src="docs/screenshots/send-cli.png" alt="pnpm send 성공(✓ applied)과 토큰 불일치 실패(✗ E_UNAUTHORIZED) 출력 예" width="640" />
 
 **4. 실전용으로 바꾼다**
 
@@ -101,6 +109,8 @@ pnpm send -d .example.com sid=abc123 --mode replace --secure --http-only --expir
 ## 옵션 페이지
 
 `chrome://extensions` → Oven → **세부정보** → **확장 프로그램 옵션** (또는 팝업의 **설정…**). 상단에 익스텐션 ID 가 표시된다.
+
+<img src="docs/screenshots/options.png" alt="Oven 옵션 페이지 — 공유 토큰, 허용 도메인, WebSocket 수신 설정, 최근 처리 로그" width="640" />
 
 | 설정 | 기본값 | 설명 |
 |---|---|---|

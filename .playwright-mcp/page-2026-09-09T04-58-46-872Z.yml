@@ -1,0 +1,69 @@
+- main [ref=f1e2]:
+  - heading "Oven — Cookie Replacer" [level=1] [ref=f1e3]
+  - paragraph [ref=f1e4]:
+    - text: "외부 앱이 전송한 쿠키를 이 프로필에 교체 적용합니다. 익스텐션 ID:"
+    - code [ref=f1e5]: abcdefghijklmnopabcdefghijklmnop
+  - generic [ref=f1e6]:
+    - generic [ref=f1e7]:
+      - heading "인증" [level=2] [ref=f1e8]
+      - generic [ref=f1e9]:
+        - text: 공유 토큰
+        - textbox "공유 토큰" [ref=f1e10]:
+          - /placeholder: 비워두면 인증을 생략합니다 (개발용)
+          - text: shared-secret
+    - generic [ref=f1e11]:
+      - heading "허용 도메인" [level=2] [ref=f1e12]
+      - generic [ref=f1e13]:
+        - text: 한 줄에 하나씩 (비우면 모든 도메인 허용)
+        - textbox "한 줄에 하나씩 (비우면 모든 도메인 허용)" [ref=f1e14]:
+          - /placeholder: "example.com\ninternal.corp"
+          - text: example.com internal.corp
+    - generic [ref=f1e15]:
+      - heading "WebSocket 수신" [level=2] [ref=f1e16]
+      - generic [ref=f1e17]:
+        - checkbox "외부 앱의 로컬 WebSocket 서버에 접속" [checked] [ref=f1e18]
+        - text: 외부 앱의 로컬 WebSocket 서버에 접속
+      - generic [ref=f1e19]:
+        - text: URL
+        - textbox "URL" [ref=f1e20]:
+          - /placeholder: ws://127.0.0.1:8765
+          - text: ws://127.0.0.1:8765
+      - paragraph [ref=f1e21]: ws:// 는 127.0.0.1 / localhost / [::1] 만 허용, 그 외 호스트는 wss:// 만 허용됩니다.
+    - button "저장" [ref=f1e23]
+  - generic [ref=f1e24]:
+    - heading [level=2] [ref=f1e25]:
+      - text: 최근 처리 로그
+      - button "새로고침" [ref=f1e26] [cursor=pointer]
+    - table [ref=f1e27]:
+      - rowgroup [ref=f1e28]:
+        - row [ref=f1e29]:
+          - columnheader "시각" [ref=f1e30]
+          - columnheader "경로" [ref=f1e31]
+          - columnheader "type" [ref=f1e32]
+          - columnheader "결과" [ref=f1e33]
+          - columnheader "상세" [ref=f1e34]
+      - rowgroup [ref=f1e35]:
+        - row [ref=f1e36]:
+          - cell "오후 1:58:34" [ref=f1e37]
+          - cell "websocket" [ref=f1e38]
+          - cell "cookies.replace" [ref=f1e39]
+          - cell "OK" [ref=f1e40]
+          - cell "applied 2 · removed 3 · failed 0" [ref=f1e41]
+        - row [ref=f1e42]:
+          - cell "오후 1:57:11" [ref=f1e43]
+          - cell "websocket" [ref=f1e44]
+          - cell "cookies.replace" [ref=f1e45]
+          - cell "FAIL" [ref=f1e46]
+          - cell "applied 1 · removed 0 · failed 1" [ref=f1e47]
+        - row [ref=f1e48]:
+          - cell "오후 1:52:06" [ref=f1e49]
+          - cell "external" [ref=f1e50]
+          - cell "cookies.replace" [ref=f1e51]
+          - cell "FAIL" [ref=f1e52]
+          - cell "E_UNAUTHORIZED" [ref=f1e53]
+        - row [ref=f1e54]:
+          - cell "오후 12:58:46" [ref=f1e55]
+          - cell "external" [ref=f1e56]
+          - cell "ping" [ref=f1e57]
+          - cell "OK" [ref=f1e58]
+          - cell [ref=f1e59]

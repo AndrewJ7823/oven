@@ -1,0 +1,26 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><style>
+body{margin:0;background:#f3f4f6;display:flex;justify-content:center;padding:24px;font-family:-apple-system,system-ui,sans-serif}
+.win{width:840px;background:#1e1e2e;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.35);overflow:hidden}
+.bar{height:34px;background:#2a2a3c;display:flex;align-items:center;padding:0 12px;gap:8px;color:#9aa;font-size:12px}
+.bar i{width:12px;height:12px;border-radius:50%;display:inline-block}
+pre{margin:0;padding:18px 20px;color:#cdd6f4;font:13px/1.65 "SF Mono",Menlo,monospace;white-space:pre-wrap}
+.p{color:#89b4fa}.c{color:#a6adc8}.g{color:#a6e3a1}.y{color:#f9e2af}.d{color:#6c7086}
+</style></head><body><div class="win"><div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span style="margin-left:8px">oven — zsh</span></div>
+<pre><span class="p">❯</span> pnpm send -d .example.com sid=abc123 theme=dark -t shared-secret \
+    --mode replace --secure --http-only --expires 1h \
+    -o https://example.com/dashboard
+
+<span class="c">[send]</span> ws://127.0.0.1:8765 에서 익스텐션 접속 대기 중… (30000ms)
+<span class="c">[send]</span> 보낼 내용: 2개 쿠키 → .example.com [replace, open https://example.com/dashboard]
+<span class="c">[send]</span> 익스텐션 접속됨 → 요청 전송
+<span class="g">✓ applied 2, removed 3, failed 0</span>
+  opened https://example.com/dashboard → tab 42, reloaded
+
+<span class="p">❯</span> pnpm send -d .example.com sid=abc123 -t wrong-token
+<span class="c">[send]</span> ws://127.0.0.1:8765 에서 익스텐션 접속 대기 중… (30000ms)
+<span class="c">[send]</span> 보낼 내용: 1개 쿠키 → .example.com [merge]
+<span class="c">[send]</span> 익스텐션 접속됨 → 요청 전송
+<span class="y">✗ E_UNAUTHORIZED: token mismatch</span>
+<span class="d">exit 1</span>
+
+<span class="p">❯</span> <span class="d">▍</span></pre></div></body></html>
