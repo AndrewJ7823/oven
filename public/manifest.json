@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Oven — Cookie Replacer",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "외부 애플리케이션이 전송한 쿠키를 받아 브라우저 쿠키를 교체합니다.",
   "minimum_chrome_version": "116",
   "permissions": ["cookies", "storage", "alarms"],

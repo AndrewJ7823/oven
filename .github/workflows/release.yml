@@ -1,0 +1,42 @@
+name: Release
+
+# 배포 절차: 로컬에서 `pnpm release <patch|minor|major>` → `git push origin main --follow-tags`
+# vX.Y.Z 태그가 push 되면 빌드 → zip → GitHub Release 생성(CHANGELOG 의 해당 섹션이 릴리스 노트).
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: 태그와 package.json / manifest 버전 일치 확인
+        run: pnpm version:check "$GITHUB_REF_NAME"
+
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm package
+
+      - name: 릴리스 노트 추출 (CHANGELOG.md → release/NOTES.md)
+        run: node scripts/release-notes.mjs "$GITHUB_REF_NAME" && cat release/NOTES.md
+
+      - name: GitHub Release 생성
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/oven-*.zip \
+            --title "Oven $GITHUB_REF_NAME" \
+            --notes-file release/NOTES.md \
+            --verify-tag

@@ -35,7 +35,7 @@
 
 ### 2.1 포함 (In Scope)
 
-- FR-01 ~ FR-11 (3장 참조)
+- FR-01 ~ FR-14 (3장 참조)
 - 두 가지 수신 트랜스포트: `externally_connectable` 메시지, 로컬 WebSocket 클라이언트
 - 옵션 페이지(설정 UI) 및 최근 처리 로그 조회
 
@@ -145,6 +145,22 @@
 - 서비스 워커는 트랜스포트 상태 변화를 `chrome.storage.session` 에 반영하고, 툴바 아이콘 **뱃지**를 갱신한다:
   연결됨/비활성은 뱃지 없음, 연결 중 `…`(노랑), 끊김 `!`(빨강).
 - 팝업은 `chrome.storage.onChanged` 를 구독해 상태/로그 변화를 실시간 반영한다.
+
+### FR-14 CLI 송신 도구 (`pnpm send`)
+
+- 저장소에 포함된 CLI 로 **도메인과 쿠키를 지정해 익스텐션에 보낼 수 있어야 한다**.
+  `pnpm send --domain <host> name=value [name=value ...] [옵션]`
+- CLI 는 로컬 WebSocket **서버**(기본 `127.0.0.1:8765`)를 열고, 익스텐션이 접속하면 즉시 `cookies.replace` 요청(4.1)을 보낸 뒤
+  같은 `requestId` 의 응답(또는 `requestId` 없는 오류 응답)을 받아 요약을 출력하고 종료한다.
+  대기 중 수신한 `ping` 하트비트에는 `pong` 으로 응답한다.
+- 쿠키 입력: 위치 인자 `name=value`(첫 `=` 기준 분리), `--cookie-string "a=1; b=2"`, `--json <file|->`(배열 또는 `{ "cookies": [...] }`, `-` 는 stdin).
+  `--json` 항목의 개별 필드는 공통 플래그를 덮어쓰고, `domain` 이 없으면 `--domain` 을 채운다.
+- 공통 플래그: `--path`(기본 `/`), `--secure`, `--http-only`, `--host-only`(도메인 앞 `.` 제거), `--same-site`(기본 `lax`),
+  `--expires <N|Ns|Nm|Nh|Nd|ISO8601>`(생략 시 세션 쿠키). `sameSite=no_restriction` 이면 `secure` 를 강제한다.
+- 요청 옵션: `--token`(또는 환경 변수 `OVEN_TOKEN`), `--open <url>` / `--no-focus`, `--mode merge|replace`, `--dry-run`, `--request-id`.
+- 연결 옵션: `--host`, `--port`, `--timeout <ms>`(접속·응답 대기, 기본 30000).
+- 종료 코드: `0` 성공 · `1` 익스텐션이 실패를 보고(`ok: false`) · `2` 인자 오류(사용법 출력) · `3` 접속/응답 시간 초과.
+- 출력에 쿠키 **값**을 포함하지 않는다(NFR-04). 순수 로직(`src/cli/send-request.ts`)은 Node/ws 에 의존하지 않아 단위 테스트한다.
 
 ---
 
@@ -264,9 +280,12 @@ src/
   transports/external-message.ts
   transports/websocket.ts
   options/                  옵션 페이지
+  cli/send-request.ts       pnpm send 순수 로직(인자 파싱·요청 생성·세션·출력)
+scripts/
+  send-cookies.mjs          pnpm send 엔트리 — ws 서버를 열어 순수 로직에 주입
 test/
   fakes/                    chrome API 페이크 (cookies, storage, runtime)
-  core/, transports/        단위 테스트
+  core/, transports/, cli/  단위 테스트 + CLI↔핸들러 통합 테스트
 ```
 
 ---
@@ -287,3 +306,5 @@ test/
 | AC-10 | WebSocket 끊김 | 백오프 후 재연결, 하트비트 전송 |
 | AC-11 | `open.url` 포함 요청 | 창 열기 → 쿠키 주입 → 새로고침 순서로 처리, `opened.reloaded: true` |
 | AC-12 | 팝업에서 WebSocket 토글 ON | 설정 저장 → 접속 → 팝업 상태 '연결됨', 아이콘 뱃지 정리 |
+| AC-13 | `pnpm send -d .example.com sid=abc --mode replace -o URL` | 익스텐션 접속 후 요청 전송 → 쿠키 교체·창 열기·새로고침 → `applied/removed` 요약 출력, exit 0 |
+| AC-14 | `pnpm send` 에 토큰 불일치 / 접속 없음 / 인자 오류 | 각각 `E_UNAUTHORIZED` exit 1 / 시간 초과 exit 3 / 사용법 출력 exit 2 |

@@ -6,7 +6,7 @@ export default defineConfig({
     include: ['test/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/core/**', 'src/transports/**'],
+      include: ['src/core/**', 'src/transports/**', 'src/cli/**'],
       thresholds: { lines: 90, functions: 90, branches: 80, statements: 90 },
     },
   },
